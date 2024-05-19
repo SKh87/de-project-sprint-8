@@ -44,7 +44,7 @@ def foreach_batch_function(df: DataFrame, epoch_id):
 
 # создаём spark сессию с необходимыми библиотеками в spark_jars_packages для интеграции с Kafka и PostgreSQL
 spark = SparkSession.builder \
-    .appName("RestaurantSubscribeStreamingService") \
+    .appName(SPARK["app_name"]) \
     .config(map=SPARK["config"]) \
     .getOrCreate()
 
