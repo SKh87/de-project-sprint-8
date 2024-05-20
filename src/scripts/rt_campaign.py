@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from pyspark.sql.functions import from_json, to_json, col, lit, struct
 from pyspark.sql.types import StructType, StructField, StringType, LongType
 
-from settings import *
+from settings import SPARK, DATABASE, KAFKA
 
 
 # метод для записи данных в 2 target: в PostgreSQL для фидбэков и в Kafka для триггеров
@@ -12,10 +12,22 @@ def foreach_batch_function(df: DataFrame, epoch_id):
     df.persist()
 
     # записываем df в PostgreSQL с полем feedback
-    df.write.format("jdbc") \
+    df.select(
+        col("restaurant_id"),
+        col("adv_campaign_id"),
+        col("adv_campaign_content"),
+        col("adv_campaign_owner"),
+        col("adv_campaign_owner_contact"),
+        col("adv_campaign_datetime_start").cast("timestamp"),
+        col("adv_campaign_datetime_end").cast("timestamp"),
+        col("datetime_created").cast("timestamp"),
+        col("client_id"),
+        col("trigger_datetime_created").cast("timestamp"),
+    ).write.format("jdbc") \
         .options(**DATABASE) \
         .option("schema", "public") \
         .option("dbtable", "subscribers_feedback") \
+        .option("stringtype", "unspecified") \
         .mode("append").save()
 
     # создаём df для отправки в Kafka. Сериализация в json.
